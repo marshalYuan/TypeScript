@@ -125,6 +125,17 @@ namespace ts {
         new: SyntaxKind.NewKeyword,
         null: SyntaxKind.NullKeyword,
         number: SyntaxKind.NumberKeyword,
+
+        int8: SyntaxKind.Int8Keyword,
+        uint8: SyntaxKind.Uint8Keyword,
+        int16: SyntaxKind.Int16Keyword,
+        uint16: SyntaxKind.Uint16Keyword,
+        int32: SyntaxKind.Int32Keyword,
+        uint32: SyntaxKind.Uint32Keyword,
+        int64: SyntaxKind.Int64Keyword,
+        uint64: SyntaxKind.Uint64Keyword,
+        float32: SyntaxKind.Float32Keyword,
+
         object: SyntaxKind.ObjectKeyword,
         package: SyntaxKind.PackageKeyword,
         private: SyntaxKind.PrivateKeyword,
@@ -1103,15 +1114,21 @@ namespace ts {
             }
 
             if (decimalFragment !== undefined || tokenFlags & TokenFlags.Scientific) {
+                tokenValue = result;
+                const type = checkFloat32Suffix();
+                let value = "";
+                if (type === SyntaxKind.NumericLiteral) {
+                    value = "" + +result; // if value is not an integer, it can be safely coerced to a number
+                }
+                else {
+                    value = tokenValue;
+                }
                 checkForIdentifierStartAfterNumericLiteral(start, decimalFragment === undefined && !!(tokenFlags & TokenFlags.Scientific));
-                return {
-                    type: SyntaxKind.NumericLiteral,
-                    value: "" + +result // if value is not an integer, it can be safely coerced to a number
-                };
+                return { type, value };
             }
             else {
                 tokenValue = result;
-                const type = checkBigIntSuffix(); // if value is an integer, check whether it is a bigint
+                const type = checkNumberSuffix(); // if value is an integer, check whether it is a bigint
                 checkForIdentifierStartAfterNumericLiteral(start);
                 return { type, value: tokenValue };
             }
@@ -1132,6 +1149,22 @@ namespace ts {
                 else {
                     error(Diagnostics.A_bigint_literal_must_be_an_integer, numericStart, identifierStart - numericStart + 1);
                 }
+            }
+            else if ((text[identifierStart] === "i" || text[identifierStart] === "u") && (
+                length === 2 && text[identifierStart + 1] === "8" ||
+                length === 3 && text[identifierStart + 1] === "1" && text[identifierStart + 2] === "6" ||
+                length === 3 && text[identifierStart + 1] === "3" && text[identifierStart + 2] === "2" ||
+                length === 3 && text[identifierStart + 1] === "6" && text[identifierStart + 2] === "4")
+            ) {
+                if (isScientific) {
+                    error(Diagnostics.A_signed_or_unsigned_int_literal_cannot_use_exponential_notation, numericStart, identifierStart - numericStart + length);
+                }
+                else {
+                    error(Diagnostics.A_signed_or_unsigned_int_literal_must_be_an_integer, numericStart, identifierStart - numericStart + length);
+                }
+            }
+            else if (text[identifierStart] === "f" && length === 3 && text[identifierStart + 1] === "3" && text[identifierStart + 2] === "2" ) {
+                return;
             }
             else {
                 error(Diagnostics.An_identifier_or_keyword_cannot_immediately_follow_a_numeric_literal, identifierStart, length);
@@ -1584,7 +1617,7 @@ namespace ts {
             return value;
         }
 
-        function checkBigIntSuffix(): SyntaxKind {
+        function checkNumberSuffix(): SyntaxKind {
             if (text.charCodeAt(pos) === CharacterCodes.n) {
                 tokenValue += "n";
                 // Use base 10 instead of base 2 or base 8 for shorter literals
@@ -1594,16 +1627,98 @@ namespace ts {
                 pos++;
                 return SyntaxKind.BigIntLiteral;
             }
-            else { // not a bigint, so can convert to number in simplified form
-                // Number() may not support 0b or 0o, so use parseInt() instead
-                const numericValue = tokenFlags & TokenFlags.BinarySpecifier
+            let kind: SizedNumberLiteralSyntaxKind | undefined;
+            while (true) {
+                if (text.charCodeAt(pos) === CharacterCodes.i && pos + 1 < end) {
+                    if (text.charCodeAt(pos + 1) === CharacterCodes._8) {
+                        pos += 2;
+                        kind = SyntaxKind.Int8Literal;
+                        break;
+                    }
+                    if (pos + 2 < end) {
+                        const [char1, char2] = [text.charCodeAt(pos + 1), text.charCodeAt(pos + 2)];
+                        if (char1 === CharacterCodes._1 && char2 === CharacterCodes._6) {
+                            pos += 3;
+                            kind = SyntaxKind.Int16Literal;
+                            break;
+                        }
+                        if (char1 === CharacterCodes._3 && char2 === CharacterCodes._2) {
+                            pos += 3;
+                            kind = SyntaxKind.Int32Literal;
+                            break;
+                        }
+                        if (char1 === CharacterCodes._6 && char2 === CharacterCodes._4) {
+                            pos += 3;
+                            kind = SyntaxKind.Int64Literal;
+                            break;
+                        }
+                    }
+                }
+                else if (text.charCodeAt(pos) === CharacterCodes.u && pos + 1 < end) {
+                    if (text.charCodeAt(pos + 1) === CharacterCodes._8) {
+                        pos += 2;
+                        kind = SyntaxKind.Uint8Literal;
+                        break;
+                    }
+                    if (pos + 2 < end) {
+                        const [char1, char2] = [text.charCodeAt(pos + 1), text.charCodeAt(pos + 2)];
+                        if (char1 === CharacterCodes._1 && char2 === CharacterCodes._6) {
+                            pos += 3;
+                            kind = SyntaxKind.Uint16Literal;
+                            break;
+                        }
+                        if (char1 === CharacterCodes._3 && char2 === CharacterCodes._2) {
+                            pos += 3;
+                            kind = SyntaxKind.Uint32Literal;
+                            break;
+                        }
+                        if (char1 === CharacterCodes._6 && char2 === CharacterCodes._4) {
+                            pos += 3;
+                            kind = SyntaxKind.Uint64Literal;
+                            break;
+                        }
+                    }
+                }
+                else if (text.charCodeAt(pos) === CharacterCodes.f && pos + 2 < end
+                    && text.charCodeAt(pos + 1) === CharacterCodes._3
+                    && text.charCodeAt(pos + 2) === CharacterCodes._2
+                ) {
+                    pos += 3;
+                    kind = SyntaxKind.Float32Literal;
+                    break;
+                }
+                break;
+            }
+            if (kind !== undefined) {
+                if (tokenFlags & TokenFlags.BinaryOrOctalSpecifier && kind !== SyntaxKind.Float32Literal) {
+                    tokenValue = parsePseudoBigInt(tokenValue + "n");
+                }
+                const kindName = sizedNumberLiteralSuffixMap[kind];
+                tokenValue += kindName;
+                return kind;
+            }
+
+            // not a bigint or other sized number, so can convert to number in simplified form
+            // Number() may not support 0b or 0o, so use parseInt() instead
+            const numericValue = tokenFlags & TokenFlags.BinarySpecifier
                     ? parseInt(tokenValue.slice(2), 2) // skip "0b"
                     : tokenFlags & TokenFlags.OctalSpecifier
                         ? parseInt(tokenValue.slice(2), 8) // skip "0o"
                         : +tokenValue;
                 tokenValue = "" + numericValue;
-                return SyntaxKind.NumericLiteral;
+            return SyntaxKind.NumericLiteral;
+        }
+
+        function checkFloat32Suffix(): SyntaxKind {
+            if (text.charCodeAt(pos) === CharacterCodes.f && pos + 2 < end
+                && text.charCodeAt(pos + 1) === CharacterCodes._3
+                && text.charCodeAt(pos + 2) === CharacterCodes._2
+            ) {
+                pos += 3;
+                tokenValue += "f32";
+                return SyntaxKind.Float32Literal;
             }
+            return SyntaxKind.NumericLiteral;
         }
 
         function scan(): SyntaxKind {
@@ -1851,7 +1966,7 @@ namespace ts {
                             }
                             tokenValue = "0x" + tokenValue;
                             tokenFlags |= TokenFlags.HexSpecifier;
-                            return token = checkBigIntSuffix();
+                            return token = checkNumberSuffix();
                         }
                         else if (pos + 2 < end && (text.charCodeAt(pos + 1) === CharacterCodes.B || text.charCodeAt(pos + 1) === CharacterCodes.b)) {
                             pos += 2;
@@ -1862,7 +1977,7 @@ namespace ts {
                             }
                             tokenValue = "0b" + tokenValue;
                             tokenFlags |= TokenFlags.BinarySpecifier;
-                            return token = checkBigIntSuffix();
+                            return token = checkNumberSuffix();
                         }
                         else if (pos + 2 < end && (text.charCodeAt(pos + 1) === CharacterCodes.O || text.charCodeAt(pos + 1) === CharacterCodes.o)) {
                             pos += 2;
@@ -1873,7 +1988,7 @@ namespace ts {
                             }
                             tokenValue = "0o" + tokenValue;
                             tokenFlags |= TokenFlags.OctalSpecifier;
-                            return token = checkBigIntSuffix();
+                            return token = checkNumberSuffix();
                         }
                         // Try to parse as an octal
                         if (pos + 1 < end && isOctalDigit(text.charCodeAt(pos + 1))) {

@@ -45,6 +45,7 @@ namespace ts {
             createNodeArray,
             createNumericLiteral,
             createBigIntLiteral,
+            createSizedNumberLiteral,
             createStringLiteral,
             createStringLiteralFromNode,
             createRegularExpressionLiteral,
@@ -819,6 +820,12 @@ namespace ts {
             return node;
         }
 
+        // @api
+        function createSizedNumberLiteral<I extends SizedNumberLiteral>(kind: SizedNumberLiteralSyntaxKind, value: number | string | PseudoBigInt): I {
+            const node = createBaseLiteral<I>(kind, typeof value === "string" ? value : typeof value === "number" ? value + "" : pseudoBigIntToString(value) + sizedNumberLiteralSuffixMap[kind]);
+            return node;
+        }
+
         function createBaseStringLiteral(text: string, isSingleQuote?: boolean) {
             const node = createBaseLiteral<StringLiteral>(SyntaxKind.StringLiteral, text);
             node.singleQuote = isSingleQuote;
@@ -851,6 +858,15 @@ namespace ts {
             switch (kind) {
                 case SyntaxKind.NumericLiteral: return createNumericLiteral(text, /*numericLiteralFlags*/ 0);
                 case SyntaxKind.BigIntLiteral: return createBigIntLiteral(text);
+                case SyntaxKind.Int8Literal: return createSizedNumberLiteral<Int8Literal>(kind, text);
+                case SyntaxKind.Int16Literal: return createSizedNumberLiteral<Int16Literal>(kind, text);
+                case SyntaxKind.Int32Literal: return createSizedNumberLiteral<Int32Literal>(kind, text);
+                case SyntaxKind.Int64Literal: return createSizedNumberLiteral<Int64Literal>(kind, text);
+                case SyntaxKind.Uint8Literal: return createSizedNumberLiteral<Uint8Literal>(kind, text);
+                case SyntaxKind.Uint16Literal: return createSizedNumberLiteral<Uint16Literal>(kind, text);
+                case SyntaxKind.Uint32Literal: return createSizedNumberLiteral<Uint32Literal>(kind, text);
+                case SyntaxKind.Uint64Literal: return createSizedNumberLiteral<Uint64Literal>(kind, text);
+                case SyntaxKind.Float32Literal: return createSizedNumberLiteral<Float32Literal>(kind, text);
                 case SyntaxKind.StringLiteral: return createStringLiteral(text, /*isSingleQuote*/ undefined);
                 case SyntaxKind.JsxText: return createJsxText(text, /*containsOnlyTriviaWhiteSpaces*/ false);
                 case SyntaxKind.JsxTextAllWhiteSpaces: return createJsxText(text, /*containsOnlyTriviaWhiteSpaces*/ true);

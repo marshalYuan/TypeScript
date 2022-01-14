@@ -7082,6 +7082,45 @@ namespace ts {
         return (negative && base10Value !== "0" ? "-" : "") + base10Value;
     }
 
+    export function parseSizedNumber(stringValue: string): [string, string] {
+        let suffix = "";
+        if (stringValue.endsWith("i8") || stringValue.endsWith("u8")) {
+            suffix = stringValue.slice(-2);
+        }
+        else if (
+            stringValue.endsWith("i16") ||
+            stringValue.endsWith("u16") ||
+            stringValue.endsWith("i32") ||
+            stringValue.endsWith("u32") ||
+            stringValue.endsWith("i64") ||
+            stringValue.endsWith("u64")) {
+            suffix = stringValue.slice(-3);
+        }
+        else if (stringValue.endsWith("f32")) {
+            return ["f32", stringValue.slice(0, -3)];
+        }
+        else {
+            return [suffix, ""];
+        }
+        return [suffix, parsePseudoBigInt(stringValue.slice(0, -suffix.length) + "n")];
+    }
+
+    function compareBase10Value(a: string, b: string) {
+        if (a.length > b.length) return 1;
+        if (a.length < b.length) return -1;
+        return a < b ? -1 : a > b ? 1 : 0;
+    }
+
+    // compare pseudo-bigint string values
+    export function comparePseudoBigInt(a: PseudoBigInt, b: PseudoBigInt) {
+        if (a.negative === b.negative) {
+            return a.negative ? compareBase10Value(b.base10Value, a.base10Value) : compareBase10Value(a.base10Value, b.base10Value);
+        }
+        return a.negative ? -1 : 1;
+    }
+
+
+
     export function isValidTypeOnlyAliasUseSite(useSite: Node): boolean {
         return !!(useSite.flags & NodeFlags.Ambient)
             || isPartOfTypeQuery(useSite)

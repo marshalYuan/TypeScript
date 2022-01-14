@@ -3668,7 +3668,7 @@ namespace ts {
 
         function nextTokenIsNumericOrBigIntLiteral() {
             nextToken();
-            return token() === SyntaxKind.NumericLiteral || token() === SyntaxKind.BigIntLiteral;
+            return token() === SyntaxKind.NumericLiteral || token() === SyntaxKind.BigIntLiteral || SizedNumberLiteralSyntaxKinds.includes(token());
         }
 
         function parseNonArrayType(): TypeNode {
@@ -3683,6 +3683,15 @@ namespace ts {
                 case SyntaxKind.UndefinedKeyword:
                 case SyntaxKind.NeverKeyword:
                 case SyntaxKind.ObjectKeyword:
+                case SyntaxKind.Int8Keyword:
+                case SyntaxKind.Int16Keyword:
+                case SyntaxKind.Int32Keyword:
+                case SyntaxKind.Int64Keyword:
+                case SyntaxKind.Uint8Keyword:
+                case SyntaxKind.Uint16Keyword:
+                case SyntaxKind.Uint32Keyword:
+                case SyntaxKind.Uint64Keyword:
+                case SyntaxKind.Float32Keyword:
                     // If these are followed by a dot, then parse these out as a dotted type reference instead.
                     return tryParse(parseKeywordAndNoDot) || parseTypeReference();
                 case SyntaxKind.AsteriskEqualsToken:
@@ -3705,10 +3714,20 @@ namespace ts {
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
-                case SyntaxKind.NullKeyword:
+                case SyntaxKind.NullKeyword: {
                     return parseLiteralTypeNode();
+                }
                 case SyntaxKind.MinusToken:
                     return lookAhead(nextTokenIsNumericOrBigIntLiteral) ? parseLiteralTypeNode(/*negative*/ true) : parseTypeReference();
                 case SyntaxKind.VoidKeyword:
@@ -3748,6 +3767,15 @@ namespace ts {
                 case SyntaxKind.StringKeyword:
                 case SyntaxKind.NumberKeyword:
                 case SyntaxKind.BigIntKeyword:
+                case SyntaxKind.Uint8Keyword:
+                case SyntaxKind.Uint16Keyword:
+                case SyntaxKind.Uint32Keyword:
+                case SyntaxKind.Uint64Keyword:
+                case SyntaxKind.Int8Keyword:
+                case SyntaxKind.Int16Keyword:
+                case SyntaxKind.Int32Keyword:
+                case SyntaxKind.Int64Keyword:
+                case SyntaxKind.Float32Keyword:
                 case SyntaxKind.BooleanKeyword:
                 case SyntaxKind.ReadonlyKeyword:
                 case SyntaxKind.SymbolKeyword:
@@ -3767,6 +3795,15 @@ namespace ts {
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
                 case SyntaxKind.ObjectKeyword:
@@ -4054,6 +4091,15 @@ namespace ts {
                 case SyntaxKind.FalseKeyword:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.TemplateHead:
@@ -5590,6 +5636,15 @@ namespace ts {
             switch (token()) {
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                     return parseLiteralNode();

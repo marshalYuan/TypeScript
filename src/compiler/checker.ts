@@ -747,6 +747,15 @@ namespace ts {
         const stringLiteralTypes = new Map<string, StringLiteralType>();
         const numberLiteralTypes = new Map<number, NumberLiteralType>();
         const bigIntLiteralTypes = new Map<string, BigIntLiteralType>();
+        const int8LiteralTypes = new Map<number, Int8LiteralType>();
+        const int16LiteralTypes = new Map<number, Int16LiteralType>();
+        const int32LiteralTypes = new Map<number, Int32LiteralType>();
+        const int64LiteralTypes = new Map<string, Int64LiteralType>();
+        const uint8LiteralTypes = new Map<number, Uint8LiteralType>();
+        const uint16LiteralTypes = new Map<number, Uint16LiteralType>();
+        const uint32LiteralTypes = new Map<number, Uint32LiteralType>();
+        const uint64LiteralTypes = new Map<string, Uint64LiteralType>();
+        const float32LiteralTypes = new Map<number, Float32LiteralType>();
         const enumLiteralTypes = new Map<string, LiteralType>();
         const indexedAccessTypes = new Map<string, IndexedAccessType>();
         const templateLiteralTypes = new Map<string, TemplateLiteralType>();
@@ -779,6 +788,15 @@ namespace ts {
         const stringType = createIntrinsicType(TypeFlags.String, "string");
         const numberType = createIntrinsicType(TypeFlags.Number, "number");
         const bigintType = createIntrinsicType(TypeFlags.BigInt, "bigint");
+        const int8Type = createIntrinsicType(TypeFlags.SizedNumber, "int8");
+        const int16Type = createIntrinsicType(TypeFlags.SizedNumber, "int16");
+        const int32Type = createIntrinsicType(TypeFlags.SizedNumber, "int32");
+        const int64Type = createIntrinsicType(TypeFlags.SizedNumber, "int64");
+        const uint8Type = createIntrinsicType(TypeFlags.SizedNumber, "uint8");
+        const uint16Type = createIntrinsicType(TypeFlags.SizedNumber, "uint16");
+        const uint32Type = createIntrinsicType(TypeFlags.SizedNumber, "uint32");
+        const uint64Type = createIntrinsicType(TypeFlags.SizedNumber, "uint64");
+        const float32Type = createIntrinsicType(TypeFlags.SizedNumber, "float32");
         const falseType = createIntrinsicType(TypeFlags.BooleanLiteral, "false") as FreshableIntrinsicType;
         const regularFalseType = createIntrinsicType(TypeFlags.BooleanLiteral, "false") as FreshableIntrinsicType;
         const trueType = createIntrinsicType(TypeFlags.BooleanLiteral, "true") as FreshableIntrinsicType;
@@ -997,11 +1015,31 @@ namespace ts {
             string: stringType,
             number: numberType,
             bigint: bigintType,
+            int8: int8Type,
+            int16: int16Type,
+            int32: int32Type,
+            int64: int64Type,
+            uint8: uint8Type,
+            uint16: uint16Type,
+            uint32: uint32Type,
+            uint64: uint64Type,
+            float32: float32Type,
             boolean: booleanType,
             symbol: esSymbolType,
             undefined: undefinedType
         }));
         const typeofType = createTypeofType();
+
+        const sizedIntegerRangeMap: Record<SignedIntLiteralSyntaxKind | UnsignedIntLiteralSyntaxKind, [PseudoBigInt, PseudoBigInt]> = {
+            [SyntaxKind.Int8Literal]: [{ negative: true, base10Value: "128" }, { negative: false, base10Value: "127" }],
+            [SyntaxKind.Int16Literal]: [{ negative: true, base10Value: "32768" }, { negative: false, base10Value: "32767" }],
+            [SyntaxKind.Int32Literal]: [{ negative: true, base10Value: "2147483648" }, { negative: false, base10Value: "2147483647" }],
+            [SyntaxKind.Int64Literal]: [{negative: true, base10Value: "9223372036854775808"}, {negative: false, base10Value: "9223372036854775807"}],
+            [SyntaxKind.Uint8Literal]: [{ negative: false, base10Value: "0" }, { negative: false, base10Value: "255" }],
+            [SyntaxKind.Uint16Literal]: [{ negative: false, base10Value: "0" }, { negative: false, base10Value: "65535" }],
+            [SyntaxKind.Uint32Literal]: [{ negative: false, base10Value: "0" }, { negative: false, base10Value: "4294967295" }],
+            [SyntaxKind.Uint64Literal]: [{negative: false, base10Value: "18446744073709551616"}, {negative: false, base10Value: "18446744073709551615"}],
+        };
 
         let _jsxNamespace: __String;
         let _jsxFactoryEntity: EntityName | undefined;
@@ -4825,6 +4863,37 @@ namespace ts {
                     context.approximateLength += 6;
                     return factory.createKeywordTypeNode(SyntaxKind.BigIntKeyword);
                 }
+                if (type.flags & TypeFlags.SizedNumber) {
+                    switch((type as IntrinsicType).intrinsicName) {
+                        case "int8":
+                            context.approximateLength += 4;
+                            return factory.createKeywordTypeNode(SyntaxKind.Int8Keyword);
+                        case "uint8":
+                            context.approximateLength += 5;
+                            return factory.createKeywordTypeNode(SyntaxKind.Uint8Keyword);
+                        case "int16":
+                            context.approximateLength += 5;
+                            return factory.createKeywordTypeNode(SyntaxKind.Int16Keyword);
+                        case "uint16":
+                            context.approximateLength += 6;
+                            return factory.createKeywordTypeNode(SyntaxKind.Uint16Keyword);
+                        case "int32":
+                            context.approximateLength += 5;
+                            return factory.createKeywordTypeNode(SyntaxKind.Int32Keyword);
+                        case "uint32":
+                            context.approximateLength += 6;
+                            return factory.createKeywordTypeNode(SyntaxKind.Uint32Keyword);
+                        case "int64":
+                            context.approximateLength += 5;
+                            return factory.createKeywordTypeNode(SyntaxKind.Int64Keyword);
+                        case "uint64":
+                            context.approximateLength += 6;
+                            return factory.createKeywordTypeNode(SyntaxKind.Uint64Keyword);
+                        case "float32":
+                            context.approximateLength += 7;
+                            return factory.createKeywordTypeNode(SyntaxKind.Float32Keyword);
+                    }
+                }
                 if (type.flags & TypeFlags.Boolean && !type.aliasSymbol) {
                     context.approximateLength += 7;
                     return factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword);
@@ -4868,6 +4937,18 @@ namespace ts {
                 if (type.flags & TypeFlags.BigIntLiteral) {
                     context.approximateLength += (pseudoBigIntToString((type as BigIntLiteralType).value).length) + 1;
                     return factory.createLiteralTypeNode((factory.createBigIntLiteral((type as BigIntLiteralType).value)));
+                }
+                if (type.flags & TypeFlags.SizedNumberLiteral) {
+                    const { value, suffix } = getRegularTypeOfLiteralType(type) as SizedNumberLiteralType;
+                    const kind = reverseSizedNumberLiteralSuffixMap[suffix];
+                    if (typeof value === "number") {
+                        context.approximateLength += (value + suffix).length;
+                    }
+                    else if (suffix === "i64" || suffix === "u64") {
+                        context.approximateLength += (pseudoBigIntToString(value).length) + 3;
+                    }
+                    context.approximateLength += (value + "").length + suffix.length;
+                    return factory.createLiteralTypeNode(factory.createSizedNumberLiteral(kind, value));
                 }
                 if (type.flags & TypeFlags.BooleanLiteral) {
                     context.approximateLength += (type as IntrinsicType).intrinsicName.length;
@@ -8708,7 +8789,7 @@ namespace ts {
 
             const isProperty = isPropertyDeclaration(declaration) || isPropertySignature(declaration);
             const isOptional = includeOptionality && (
-                isProperty && !!(declaration as PropertyDeclaration | PropertySignature).questionToken ||
+                isProperty && !!(declaration).questionToken ||
                 isParameter(declaration) && (!!declaration.questionToken || isJSDocOptionalParameter(declaration)) ||
                 isOptionalJSDocPropertyLikeTag(declaration));
 
@@ -10411,6 +10492,8 @@ namespace ts {
                 case SyntaxKind.UndefinedKeyword:
                 case SyntaxKind.NeverKeyword:
                 case SyntaxKind.LiteralType:
+                case SyntaxKind.Int32Keyword:
+                case SyntaxKind.Int32Keyword:
                     return true;
                 case SyntaxKind.ArrayType:
                     return isThislessType((node as ArrayTypeNode).elementType);
@@ -14556,6 +14639,7 @@ namespace ts {
                     t.flags & TypeFlags.String && includes & TypeFlags.StringLiteral ||
                     t.flags & TypeFlags.Number && includes & TypeFlags.NumberLiteral ||
                     t.flags & TypeFlags.BigInt && includes & TypeFlags.BigIntLiteral ||
+                    t.flags & TypeFlags.SizedNumber && includes & TypeFlags.SizedNumberLiteral ||
                     t.flags & TypeFlags.ESSymbol && includes & TypeFlags.UniqueESSymbol;
                 if (remove) {
                     orderedRemoveItemAt(types, i);
@@ -16156,6 +16240,117 @@ namespace ts {
                 (bigIntLiteralTypes.set(key, type = createLiteralType(TypeFlags.BigIntLiteral, value) as BigIntLiteralType), type);
         }
 
+        function getInt8LiteralType(value: number): Int8LiteralType {
+            let type = int8LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Int8LiteralType;
+                type.suffix = "i8";
+                // type.min = -128;
+                // type.max = 127;
+                int8LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getUint8LiteralType(value: number): Uint8LiteralType {
+            let type = uint8LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Uint8LiteralType;
+                type.suffix = "u8";
+                // type.min = 0;
+                // type.max = 255;
+                uint8LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getInt16LiteralType(value: number): Int16LiteralType {
+            let type = int16LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Int16LiteralType;
+                type.suffix = "i16";
+                // type.min = -32768;
+                // type.max = 32767;
+                int16LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getUint16LiteralType(value: number): Uint16LiteralType {
+            let type = uint16LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Uint16LiteralType;
+                type.suffix = "u16";
+                // type.min = 0;
+                // type.max = 65535;
+                uint16LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getInt32LiteralType(value: number): Int32LiteralType {
+            let type = int32LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Int32LiteralType;
+                type.suffix = "i32";
+                // type.min = -2147483648;
+                // type.max = 2147483647;
+                int32LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getUint32LiteralType(value: number): Uint32LiteralType {
+            let type = uint32LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Uint32LiteralType;
+                type.suffix = "u32";
+                // type.min = 0;
+                // type.max = 4294967295;
+                uint32LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+        function getInt64LiteralType(value: PseudoBigInt): Int64LiteralType {
+            const key = pseudoBigIntToString(value);
+            let type = int64LiteralTypes.get(key);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Int64LiteralType;
+                type.suffix = "i64";
+                // type.min = -9223372036854775808n;
+                // type.max = 9223372036854775807n;
+                int64LiteralTypes.set(key, type);
+            }
+            return type;
+        }
+
+        function getUint64LiteralType(value: PseudoBigInt): Uint64LiteralType {
+            const key = pseudoBigIntToString(value);
+            let type = uint64LiteralTypes.get(key);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Uint64LiteralType;
+                type.suffix = "u64";
+                // type.min = 0n;
+                // type.max = 18446744073709551615n;
+                uint64LiteralTypes.set(key, type);
+            }
+            return type;
+        }
+
+        function getFloat32LiteralType(value: number): Float32LiteralType {
+            let type = float32LiteralTypes.get(value);
+            if (!type) {
+                type = createLiteralType(TypeFlags.SizedNumberLiteral, value) as Float32LiteralType;
+                type.suffix = "f32";
+                // type.min = -3.4028234663852886e+38;
+                // type.max = 3.4028234663852886e+38;
+                float32LiteralTypes.set(value, type);
+            }
+            return type;
+        }
+
+
         function getEnumLiteralType(value: string | number, enumId: number, symbol: Symbol): LiteralType {
             let type;
             const qualifier = typeof value === "string" ? "@" : "#";
@@ -16275,6 +16470,24 @@ namespace ts {
                     return numberType;
                 case SyntaxKind.BigIntKeyword:
                     return bigintType;
+                case SyntaxKind.Int8Keyword:
+                    return int8Type;
+                case SyntaxKind.Uint8Keyword:
+                    return uint8Type;
+                case SyntaxKind.Int16Keyword:
+                    return int16Type;
+                case SyntaxKind.Uint16Keyword:
+                    return uint16Type;
+                case SyntaxKind.Int32Keyword:
+                    return int32Type;
+                case SyntaxKind.Uint32Keyword:
+                    return uint32Type;
+                case SyntaxKind.Int64Keyword:
+                    return int64Type;
+                case SyntaxKind.Uint64Keyword:
+                    return uint64Type;
+                case SyntaxKind.Float32Keyword:
+                    return float32Type;
                 case SyntaxKind.BooleanKeyword:
                     return booleanType;
                 case SyntaxKind.SymbolKeyword:
@@ -17816,6 +18029,7 @@ namespace ts {
                 t & TypeFlags.NumberLiteral && !(t & TypeFlags.EnumLiteral) &&
                 (source as NumberLiteralType).value === (target as NumberLiteralType).value) return true;
             if (s & TypeFlags.BigIntLike && t & TypeFlags.BigInt) return true;
+            if (s & TypeFlags.SizedNumberLike && t & TypeFlags.SizedNumber) return true;
             if (s & TypeFlags.BooleanLike && t & TypeFlags.Boolean) return true;
             if (s & TypeFlags.ESSymbolLike && t & TypeFlags.ESSymbol) return true;
             if (s & TypeFlags.Enum && t & TypeFlags.Enum && isEnumTypeRelatedTo(source.symbol, target.symbol, errorReporter)) return true;
@@ -18177,6 +18391,9 @@ namespace ts {
                                 reportError(Diagnostics.Type_0_is_not_assignable_to_type_1_Did_you_mean_2, generalizedSourceType, targetType, typeToString(suggestedType));
                                 return;
                             }
+                        }
+                        if(targetType === "float32") {
+                            debugger;
                         }
                         message = Diagnostics.Type_0_is_not_assignable_to_type_1;
                     }
@@ -18854,6 +19071,7 @@ namespace ts {
                             // If result is definitely true, record all maybe keys as having succeeded. Also, record Ternary.Maybe
                             // results as having succeeded once we reach depth 0, but never record Ternary.Unknown results.
                             for (let i = maybeStart; i < maybeCount; i++) {
+                                debugger;
                                 relation.set(maybeKeys[i], RelationComparisonResult.Succeeded | propagatingVarianceFlags);
                             }
                         }
@@ -20796,11 +21014,36 @@ namespace ts {
                 isUnitType(type);
         }
 
+        function getSizedNumberLiteralType(type: SizedNumberLiteralType): Type {
+            const suffix = type.suffix ? type.suffix : (getRegularTypeOfLiteralType(type) as SizedNumberLiteralType).suffix;
+            switch (suffix) {
+                case "i8":
+                   return int8Type;
+                case "i16":
+                    return int16Type;
+                case "i32":
+                    return int32Type;
+                case "i64":
+                    return int64Type;
+                case "u8":
+                    return uint8Type;
+                case "u16":
+                    return uint16Type;
+                case "u32":
+                    return uint32Type;
+                case "u64":
+                    return uint64Type;
+                case "f32":
+                    return float32Type;
+           }
+        }
+
         function getBaseTypeOfLiteralType(type: Type): Type {
             return type.flags & TypeFlags.EnumLiteral ? getBaseTypeOfEnumLiteralType(type as LiteralType) :
                 type.flags & (TypeFlags.StringLiteral | TypeFlags.TemplateLiteral | TypeFlags.StringMapping) ? stringType :
                 type.flags & TypeFlags.NumberLiteral ? numberType :
                 type.flags & TypeFlags.BigIntLiteral ? bigintType :
+                type.flags & TypeFlags.SizedNumberLiteral ? getSizedNumberLiteralType(type as SizedNumberLiteralType) :
                 type.flags & TypeFlags.BooleanLiteral ? booleanType :
                 type.flags & TypeFlags.Union ? mapType(type as UnionType, getBaseTypeOfLiteralType) :
                 type;
@@ -20811,6 +21054,7 @@ namespace ts {
                 type.flags & TypeFlags.StringLiteral && isFreshLiteralType(type) ? stringType :
                 type.flags & TypeFlags.NumberLiteral && isFreshLiteralType(type) ? numberType :
                 type.flags & TypeFlags.BigIntLiteral && isFreshLiteralType(type) ? bigintType :
+                type.flags & TypeFlags.SizedNumberLiteral && isFreshLiteralType(type) ? getSizedNumberLiteralType(type as SizedNumberLiteralType) :
                 type.flags & TypeFlags.BooleanLiteral && isFreshLiteralType(type) ? booleanType :
                 type.flags & TypeFlags.Union ? mapType(type as UnionType, getWidenedLiteralType) :
                 type;
@@ -20896,6 +21140,13 @@ namespace ts {
             return value.base10Value === "0";
         }
 
+        function isZeroSizedNumber({value}: SizedNumberLiteralType) {
+            if (typeof value === "number") {
+                return value === 0;
+            }
+            return value.base10Value === "0";
+        }
+
         function getFalsyFlagsOfTypes(types: Type[]): TypeFlags {
             let result: TypeFlags = 0;
             for (const t of types) {
@@ -20912,6 +21163,7 @@ namespace ts {
                 type.flags & TypeFlags.StringLiteral ? (type as StringLiteralType).value === "" ? TypeFlags.StringLiteral : 0 :
                 type.flags & TypeFlags.NumberLiteral ? (type as NumberLiteralType).value === 0 ? TypeFlags.NumberLiteral : 0 :
                 type.flags & TypeFlags.BigIntLiteral ? isZeroBigInt(type as BigIntLiteralType) ? TypeFlags.BigIntLiteral : 0 :
+                type.flags & TypeFlags.SizedNumberLiteral ? isZeroSizedNumber(type as SizedNumberLiteralType) ? TypeFlags.SizedNumberLiteral : 0 :
                 type.flags & TypeFlags.BooleanLiteral ? (type === falseType || type === regularFalseType) ? TypeFlags.BooleanLiteral : 0 :
                 type.flags & TypeFlags.PossiblyFalsy;
         }
@@ -20936,6 +21188,7 @@ namespace ts {
                 type.flags & TypeFlags.StringLiteral && (type as StringLiteralType).value === "" ||
                 type.flags & TypeFlags.NumberLiteral && (type as NumberLiteralType).value === 0 ||
                 type.flags & TypeFlags.BigIntLiteral && isZeroBigInt(type as BigIntLiteralType) ? type :
+                type.flags & TypeFlags.SizedNumberLiteral && isZeroSizedNumber(type as SizedNumberLiteralType) ? type :
                 neverType;
         }
 
@@ -22927,6 +23180,12 @@ namespace ts {
                     isZero ? TypeFacts.ZeroBigIntStrictFacts : TypeFacts.NonZeroBigIntStrictFacts :
                     isZero ? TypeFacts.ZeroBigIntFacts : TypeFacts.NonZeroBigIntFacts;
             }
+            // if (flags & TypeFlags.SizedNumber) {
+
+            // }
+            // if (flags & TypeFlags.SizedNumberLiteral) {
+
+            // }
             if (flags & TypeFlags.Boolean) {
                 return strictNullChecks ? TypeFacts.BooleanStrictFacts : TypeFacts.BooleanFacts;
             }
@@ -23296,12 +23555,13 @@ namespace ts {
         // types we don't actually care about.
         function replacePrimitivesWithLiterals(typeWithPrimitives: Type, typeWithLiterals: Type) {
             if (maybeTypeOfKind(typeWithPrimitives, TypeFlags.String | TypeFlags.TemplateLiteral | TypeFlags.Number | TypeFlags.BigInt) &&
-                maybeTypeOfKind(typeWithLiterals, TypeFlags.StringLiteral | TypeFlags.TemplateLiteral | TypeFlags.StringMapping | TypeFlags.NumberLiteral | TypeFlags.BigIntLiteral)) {
+                maybeTypeOfKind(typeWithLiterals, TypeFlags.StringLiteral | TypeFlags.TemplateLiteral | TypeFlags.StringMapping | TypeFlags.NumberLiteral | TypeFlags.BigIntLiteral | TypeFlags.SizedNumberLiteral)) {
                 return mapType(typeWithPrimitives, t =>
                     t.flags & TypeFlags.String ? extractTypesOfKind(typeWithLiterals, TypeFlags.String | TypeFlags.StringLiteral | TypeFlags.TemplateLiteral | TypeFlags.StringMapping) :
                     isPatternLiteralType(t) && !maybeTypeOfKind(typeWithLiterals, TypeFlags.String | TypeFlags.TemplateLiteral | TypeFlags.StringMapping) ? extractTypesOfKind(typeWithLiterals, TypeFlags.StringLiteral) :
                     t.flags & TypeFlags.Number ? extractTypesOfKind(typeWithLiterals, TypeFlags.Number | TypeFlags.NumberLiteral) :
-                    t.flags & TypeFlags.BigInt ? extractTypesOfKind(typeWithLiterals, TypeFlags.BigInt | TypeFlags.BigIntLiteral) : t);
+                    t.flags & TypeFlags.BigInt ? extractTypesOfKind(typeWithLiterals, TypeFlags.BigInt | TypeFlags.BigIntLiteral) :
+                    t.flags & TypeFlags.SizedNumber ? extractTypesOfKind(typeWithLiterals, TypeFlags.SizedNumber | TypeFlags.SizedNumberLiteral) : t);
             }
             return typeWithPrimitives;
         }
@@ -26383,6 +26643,15 @@ namespace ts {
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
@@ -27856,7 +28125,7 @@ namespace ts {
             const isNodeOpeningLikeElement = isJsxOpeningLikeElement(node);
 
             if (isNodeOpeningLikeElement) {
-                checkGrammarJsxElement(node as JsxOpeningLikeElement);
+                checkGrammarJsxElement(node);
             }
 
             checkJsxPreconditions(node);
@@ -27866,7 +28135,7 @@ namespace ts {
                 // And if there is no reactNamespace/jsxFactory's symbol in scope when targeting React emit, we should issue an error.
                 const jsxFactoryRefErr = diagnostics && compilerOptions.jsx === JsxEmit.React ? Diagnostics.Cannot_find_name_0 : undefined;
                 const jsxFactoryNamespace = getJsxNamespace(node);
-                const jsxFactoryLocation = isNodeOpeningLikeElement ? (node as JsxOpeningLikeElement).tagName : node;
+                const jsxFactoryLocation = isNodeOpeningLikeElement ? (node).tagName : node;
 
                 // allow null as jsxFragmentFactory
                 let jsxFactorySym: Symbol | undefined;
@@ -27896,9 +28165,9 @@ namespace ts {
             }
 
             if (isNodeOpeningLikeElement) {
-                const jsxOpeningLikeNode = node as JsxOpeningLikeElement;
+                const jsxOpeningLikeNode = node ;
                 const sig = getResolvedSignature(jsxOpeningLikeNode);
-                checkDeprecatedSignature(sig, node as JsxOpeningLikeElement);
+                checkDeprecatedSignature(sig, node);
                 checkJsxReturnAssignableToAppropriateBound(getJsxReferenceKind(jsxOpeningLikeNode), getReturnTypeOfSignature(sig), jsxOpeningLikeNode);
             }
         }
@@ -31312,6 +31581,15 @@ namespace ts {
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
                 case SyntaxKind.ArrayLiteralExpression:
@@ -31323,7 +31601,14 @@ namespace ts {
                 case SyntaxKind.PrefixUnaryExpression:
                     const op = (node as PrefixUnaryExpression).operator;
                     const arg = (node as PrefixUnaryExpression).operand;
-                    return op === SyntaxKind.MinusToken && (arg.kind === SyntaxKind.NumericLiteral || arg.kind === SyntaxKind.BigIntLiteral) ||
+                    return op === SyntaxKind.MinusToken && (
+                            arg.kind === SyntaxKind.NumericLiteral ||
+                            arg.kind === SyntaxKind.BigIntLiteral ||
+                            arg.kind === SyntaxKind.Int8Literal ||
+                            arg.kind === SyntaxKind.Int16Literal ||
+                            arg.kind === SyntaxKind.Int32Literal ||
+                            arg.kind === SyntaxKind.Int64Literal ||
+                            arg.kind === SyntaxKind.Float32Literal) ||
                         op === SyntaxKind.PlusToken && arg.kind === SyntaxKind.NumericLiteral;
                 case SyntaxKind.PropertyAccessExpression:
                 case SyntaxKind.ElementAccessExpression:
@@ -32498,6 +32783,35 @@ namespace ts {
                             base10Value: parsePseudoBigInt((node.operand as BigIntLiteral).text)
                         }));
                     }
+                    break;
+                case SyntaxKind.Int8Literal:
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        return getFreshTypeOfLiteralType(getInt8LiteralType(-parseSizedNumber((node.operand as Int8Literal).text)));
+                    }
+                    break;
+                case SyntaxKind.Int16Literal:
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        return getFreshTypeOfLiteralType(getInt16LiteralType(-parseSizedNumber((node.operand as Int16Literal).text)));
+                    }
+                    break;
+                case SyntaxKind.Int32Literal:
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        return getFreshTypeOfLiteralType(getInt32LiteralType(-parseSizedNumber((node.operand as Int16Literal).text)));
+                    }
+                    break;
+                case SyntaxKind.Int64Literal:
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        return getFreshTypeOfLiteralType(getInt64LiteralType({
+                            negative: true,
+                            base10Value: parsePseudoBigInt((node.operand as Int64Literal).text)
+                        }));
+                    }
+                    break;
+                case SyntaxKind.Float32Literal:
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        return getFreshTypeOfLiteralType(getFloat32LiteralType(-parseSizedNumber((node.operand as Float32Literal).text)));
+                    }
+                    break;
             }
             switch (node.operator) {
                 case SyntaxKind.PlusToken:
@@ -32511,7 +32825,18 @@ namespace ts {
                         if (maybeTypeOfKind(operandType, TypeFlags.BigIntLike)) {
                             error(node.operand, Diagnostics.Operator_0_cannot_be_applied_to_type_1, tokenToString(node.operator), typeToString(getBaseTypeOfLiteralType(operandType)));
                         }
+                        if (maybeTypeOfKind(operandType, TypeFlags.SizedNumberLike)) {
+                            error(node.operand, Diagnostics.Operator_0_cannot_be_applied_to_type_1, tokenToString(node.operator), typeToString(getBaseTypeOfLiteralType(operandType)));
+                        }
                         return numberType;
+                    }
+                    if (node.operator === SyntaxKind.MinusToken) {
+                        const baseType = getBaseTypeOfLiteralType(operandType);
+                        if (maybeTypeOfKind(operandType, TypeFlags.SizedNumberLike) &&
+                            (baseType === uint8Type || baseType === uint16Type || baseType === uint32Type || baseType === uint64Type)
+                        ) {
+                            error(node.operand, Diagnostics.Operator_0_cannot_be_applied_to_type_1, tokenToString(node.operator), typeToString(baseType));
+                        }
                     }
                     return getUnaryResultType(operandType);
                 case SyntaxKind.ExclamationToken:
@@ -32589,8 +32914,13 @@ namespace ts {
             if (strict && source.flags & (TypeFlags.AnyOrUnknown | TypeFlags.Void | TypeFlags.Undefined | TypeFlags.Null)) {
                 return false;
             }
+            if (source.flags & TypeFlags.SizedNumberLiteral || kind & TypeFlags.SizedNumberLiteral) {
+                debugger;
+            }
             return !!(kind & TypeFlags.NumberLike) && isTypeAssignableTo(source, numberType) ||
                 !!(kind & TypeFlags.BigIntLike) && isTypeAssignableTo(source, bigintType) ||
+                // @TODO: Should this be `isTypeAssignableTo(source, stringType)`?
+                // !!(kind & TypeFlags.SizedNumberLike) && isTypeAssignableTo(source, int32Type) ||
                 !!(kind & TypeFlags.StringLike) && isTypeAssignableTo(source, stringType) ||
                 !!(kind & TypeFlags.BooleanLike) && isTypeAssignableTo(source, booleanType) ||
                 !!(kind & TypeFlags.Void) && isTypeAssignableTo(source, voidType) ||
@@ -32873,6 +33203,15 @@ namespace ts {
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.BigIntLiteral:
+                case SyntaxKind.Int8Literal:
+                case SyntaxKind.Int16Literal:
+                case SyntaxKind.Int32Literal:
+                case SyntaxKind.Int64Literal:
+                case SyntaxKind.Uint8Literal:
+                case SyntaxKind.Uint16Literal:
+                case SyntaxKind.Uint32Literal:
+                case SyntaxKind.Uint64Literal:
+                case SyntaxKind.Float32Literal:
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
                 case SyntaxKind.NullKeyword:
@@ -34080,6 +34419,39 @@ namespace ts {
                         negative: false,
                         base10Value: parsePseudoBigInt((node as BigIntLiteral).text)
                     }));
+                case SyntaxKind.Int8Literal:
+                    checkGrammarSizedIntegerLiteral(node as Int8Literal);
+                    return getFreshTypeOfLiteralType(getInt8LiteralType(+(parseSizedNumber((node as Int8Literal).text))[1]));
+                case SyntaxKind.Int16Literal:
+                    checkGrammarSizedIntegerLiteral(node as Int16Literal);
+                    return getFreshTypeOfLiteralType(getInt16LiteralType(+(parseSizedNumber((node as Int16Literal).text))[1]));
+                case SyntaxKind.Int32Literal:
+                    checkGrammarSizedIntegerLiteral(node as Int32Literal);
+                    return getFreshTypeOfLiteralType(getInt32LiteralType(+(parseSizedNumber((node as Int32Literal).text))[1]));
+                case SyntaxKind.Int64Literal:
+                    checkGrammarSizedIntegerLiteral(node as Int64Literal);
+                    return getFreshTypeOfLiteralType(getInt64LiteralType({
+                        negative: false,
+                        base10Value: parsePseudoBigInt((node as Int64Literal).text)
+                    }));
+                case SyntaxKind.Uint8Literal:
+                    checkGrammarSizedIntegerLiteral(node as Uint8Literal);
+                    return getFreshTypeOfLiteralType(getUint8LiteralType(+(parseSizedNumber((node as Uint8Literal).text))[1]));
+                case SyntaxKind.Uint16Literal:
+                    checkGrammarSizedIntegerLiteral(node as Uint16Literal);
+                    return getFreshTypeOfLiteralType(getUint16LiteralType(+(parseSizedNumber((node as Uint16Literal).text))[1]));
+                case SyntaxKind.Uint32Literal:
+                    checkGrammarSizedIntegerLiteral(node as Uint32Literal);
+                    return getFreshTypeOfLiteralType(getUint32LiteralType(+(parseSizedNumber((node as Uint32Literal).text))[1]));
+                case SyntaxKind.Uint64Literal:
+                    checkGrammarSizedIntegerLiteral(node as Uint64Literal);
+                    return getFreshTypeOfLiteralType(getUint64LiteralType({
+                        negative: false,
+                        base10Value: parsePseudoBigInt((node as BigIntLiteral).text)
+                    }));
+                case SyntaxKind.Float32Literal:
+                    checkGrammarFloat32Literal(node as Float32Literal);
+                    return getFreshTypeOfLiteralType(getFloat32LiteralType(+(parseSizedNumber((node as Float32Literal).text))[1]));
                 case SyntaxKind.TrueKeyword:
                     return trueType;
                 case SyntaxKind.FalseKeyword:
@@ -36933,7 +37305,7 @@ namespace ts {
                     // Don't validate for-in initializer as it is already an error
                     const widenedType = getWidenedTypeForVariableLikeDeclaration(node);
                     if (needCheckInitializer) {
-                        const initializerType = checkExpressionCached(node.initializer!);
+                        const initializerType = checkExpressionCached(node.initializer);
                         if (strictNullChecks && needCheckWidenedType) {
                             checkNonNullNonVoidType(initializerType, node);
                         }
@@ -43569,6 +43941,25 @@ namespace ts {
                 (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.BigIntLiteral;
         }
 
+        function isSizedNumberLiteralExpression(expr: Expression) {
+            if (expr.kind === SyntaxKind.Int8Literal ||
+                expr.kind === SyntaxKind.Int16Literal ||
+                expr.kind === SyntaxKind.Int32Literal ||
+                expr.kind === SyntaxKind.Int64Literal ||
+                expr.kind === SyntaxKind.Uint8Literal ||
+                expr.kind === SyntaxKind.Uint16Literal ||
+                expr.kind === SyntaxKind.Uint32Literal ||
+                expr.kind === SyntaxKind.Uint64Literal ||
+                expr.kind === SyntaxKind.Float32Literal) return true;
+            if (expr.kind === SyntaxKind.PrefixUnaryExpression && (expr as PrefixUnaryExpression).operator === SyntaxKind.MinusToken) {
+                return (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.Int8Literal ||
+                    (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.Int16Literal ||
+                    (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.Int32Literal ||
+                    (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.Int64Literal ||
+                    (expr as PrefixUnaryExpression).operand.kind === SyntaxKind.Float32Literal;
+            }
+        }
+
         function isSimpleLiteralEnumReference(expr: Expression) {
             if ((isPropertyAccessExpression(expr) || (isElementAccessExpression(expr) && isStringOrNumberLiteralExpression(expr.argumentExpression))) &&
                 isEntityNameExpression(expr.expression)) {
@@ -43583,7 +43974,8 @@ namespace ts {
                     isStringOrNumberLiteralExpression(initializer) ||
                     isSimpleLiteralEnumReference(initializer) ||
                     initializer.kind === SyntaxKind.TrueKeyword || initializer.kind === SyntaxKind.FalseKeyword ||
-                    isBigIntLiteralExpression(initializer)
+                    isBigIntLiteralExpression(initializer) ||
+                    isSizedNumberLiteralExpression(initializer)
                 );
                 const isConstOrReadonly = isDeclarationReadonly(node) || isVariableDeclaration(node) && isVarConst(node);
                 if (isConstOrReadonly && !node.type) {
@@ -43967,6 +44359,45 @@ namespace ts {
                     if (grammarErrorOnNode(node, Diagnostics.BigInt_literals_are_not_available_when_targeting_lower_than_ES2020)) {
                         return true;
                     }
+                }
+            }
+            return false;
+        }
+
+        function checkGrammarSizedIntegerLiteral(node: SizedIntegerLiteral): boolean {
+            let isNegative = false;
+            if (node.parent.kind === SyntaxKind.PrefixUnaryExpression && (node.parent as PrefixUnaryExpression).operator === SyntaxKind.MinusToken) {
+                isNegative = true;
+            }
+            const text = getTextOfNode(node);
+            const [type, base10Value] = parseSizedNumber(text);
+            if (!type) {
+                return true;
+            }
+            const pseudoBigInt = { negative: isNegative, base10Value };
+            const [min, max] = sizedIntegerRangeMap[node.kind];
+            if (comparePseudoBigInt(pseudoBigInt, min) === -1 || comparePseudoBigInt(pseudoBigInt, max) === 1) {
+                if (grammarErrorOnNode(isNegative ? node.parent : node, Diagnostics.A_0_literal_must_be_an_integer_between_1_and_2, sizedNumberLiteralSuffixMap[node.kind], min.negative ? "-" + min.base10Value : min.base10Value, max.base10Value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkGrammarFloat32Literal(node: Float32Literal): boolean {
+            let isNegative = false;
+            if (node.parent.kind === SyntaxKind.PrefixUnaryExpression && (node.parent as PrefixUnaryExpression).operator === SyntaxKind.MinusToken) {
+                isNegative = true;
+            }
+            const text = getTextOfNode(node);
+            const [type, base10Value] = parseSizedNumber(text);
+            if (!type) {
+                return true;
+            }
+            const value = isNegative ? -base10Value : +base10Value;
+            if (value < -3.4028234663852886e+38 || value > 3.4028234663852886e+38) {
+                if (grammarErrorOnNode(isNegative ? node.parent : node, Diagnostics.A_0_literal_must_be_an_integer_between_1_and_2, sizedNumberLiteralSuffixMap[node.kind], -3.4028234663852886e+38, 3.4028234663852886e+38)) {
+                    return true;
                 }
             }
             return false;

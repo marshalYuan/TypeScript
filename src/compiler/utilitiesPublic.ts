@@ -1522,6 +1522,15 @@ namespace ts {
             case SyntaxKind.RegularExpressionLiteral:
             case SyntaxKind.NumericLiteral:
             case SyntaxKind.BigIntLiteral:
+            case SyntaxKind.Int8Literal:
+            case SyntaxKind.Int16Literal:
+            case SyntaxKind.Int32Literal:
+            case SyntaxKind.Int64Literal:
+            case SyntaxKind.Uint8Literal:
+            case SyntaxKind.Uint16Literal:
+            case SyntaxKind.Uint32Literal:
+            case SyntaxKind.Uint64Literal:
+            case SyntaxKind.Float32Literal:
             case SyntaxKind.StringLiteral:
             case SyntaxKind.NoSubstitutionTemplateLiteral:
             case SyntaxKind.TemplateExpression:

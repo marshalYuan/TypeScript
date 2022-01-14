@@ -1671,6 +1671,9 @@ namespace ts {
                 case TypeReferenceSerializationKind.BigIntLikeType:
                     return getGlobalBigIntNameWithFallback();
 
+                case TypeReferenceSerializationKind.IntegerLikeType:
+                    return factory.createIdentifier("Number");
+
                 case TypeReferenceSerializationKind.BooleanType:
                     return factory.createIdentifier("Boolean");
 

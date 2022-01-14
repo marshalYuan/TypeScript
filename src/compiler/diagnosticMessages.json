@@ -4161,7 +4161,7 @@
         "category": "Message",
         "code": 6041
     },
-    
+
     "Generates corresponding '.map' file.": {
         "category": "Message",
         "code": 6043
@@ -7236,5 +7236,25 @@
     "A 'return' statement cannot be used inside a class static block.": {
         "category": "Error",
         "code": 18041
+    },
+    "A signed or unsigned int literal cannot use exponential notation.": {
+        "category": "Error",
+        "code": 20001
+    },
+    "A signed or unsigned int literal must be an integer.": {
+        "category": "Error",
+        "code": 20002
+    },
+    "A {0} literal must be an integer between {1} and {2}.": {
+        "category": "Error",
+        "code": 20003
+    },
+    "A unsigned literal value cannot be negative.": {
+        "category": "Error",
+        "code": 20004
+    },
+    "Cannot apply unary operator `-` to an unsigned value.": {
+        "category": "Error",
+        "code": 20005
     }
 }

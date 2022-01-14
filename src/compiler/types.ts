@@ -34,6 +34,15 @@ namespace ts {
         NumericLiteral,
         BigIntLiteral,
         StringLiteral,
+        Int8Literal,
+        Uint8Literal,
+        Int16Literal,
+        Uint16Literal,
+        Int32Literal,
+        Uint32Literal,
+        Int64Literal,
+        Uint64Literal,
+        Float32Literal,
         JsxText,
         JsxTextAllWhiteSpaces,
         RegularExpressionLiteral,
@@ -190,6 +199,16 @@ namespace ts {
         FromKeyword,
         GlobalKeyword,
         BigIntKeyword,
+        // tx numerical nodes
+        Int8Keyword,
+        Uint8Keyword,
+        Int16Keyword,
+        Uint16Keyword,
+        Int32Keyword,
+        Uint32Keyword,
+        Int64Keyword,
+        Uint64Keyword,
+        Float32Keyword,
         OverrideKeyword,
         OfKeyword, // LastKeyword and LastToken and LastContextualKeyword
 
@@ -465,6 +484,34 @@ namespace ts {
         | SyntaxKind.ConflictMarkerTrivia
         ;
 
+    export type SignedIntLiteralSyntaxKind =
+        | SyntaxKind.Int8Literal
+        | SyntaxKind.Int16Literal
+        | SyntaxKind.Int32Literal
+        | SyntaxKind.Int64Literal
+        ;
+
+    export type UnsignedIntLiteralSyntaxKind =
+        | SyntaxKind.Uint8Literal
+        | SyntaxKind.Uint16Literal
+        | SyntaxKind.Uint32Literal
+        | SyntaxKind.Uint64Literal
+        ;
+
+    export type SizedNumberLiteralSyntaxKind = SignedIntLiteralSyntaxKind | UnsignedIntLiteralSyntaxKind | SyntaxKind.Float32Literal;
+
+    export const SizedNumberLiteralSyntaxKinds = [
+        SyntaxKind.Int8Literal,
+        SyntaxKind.Int16Literal,
+        SyntaxKind.Int32Literal,
+        SyntaxKind.Int64Literal,
+        SyntaxKind.Uint8Literal,
+        SyntaxKind.Uint16Literal,
+        SyntaxKind.Uint32Literal,
+        SyntaxKind.Uint64Literal,
+        SyntaxKind.Float32Literal,
+    ];
+
     export type LiteralSyntaxKind =
         | SyntaxKind.NumericLiteral
         | SyntaxKind.BigIntLiteral
@@ -473,6 +520,12 @@ namespace ts {
         | SyntaxKind.JsxTextAllWhiteSpaces
         | SyntaxKind.RegularExpressionLiteral
         | SyntaxKind.NoSubstitutionTemplateLiteral
+        | SyntaxKind.Int32Literal
+        | SyntaxKind.Int8Literal
+        | SyntaxKind.Int16Literal
+        | SyntaxKind.Int32Literal
+        | SyntaxKind.Int64Literal
+        | SyntaxKind.Float32Literal
         ;
 
     export type PseudoLiteralSyntaxKind =
@@ -622,6 +675,15 @@ namespace ts {
         | SyntaxKind.WhileKeyword
         | SyntaxKind.WithKeyword
         | SyntaxKind.YieldKeyword
+        | SyntaxKind.Int8Keyword
+        | SyntaxKind.Uint8Keyword
+        | SyntaxKind.Int16Keyword
+        | SyntaxKind.Uint16Keyword
+        | SyntaxKind.Int32Keyword
+        | SyntaxKind.Uint32Keyword
+        | SyntaxKind.Int64Keyword
+        | SyntaxKind.Uint64Keyword
+        | SyntaxKind.Float32Keyword
         ;
 
     export type ModifierSyntaxKind =
@@ -652,6 +714,15 @@ namespace ts {
         | SyntaxKind.UndefinedKeyword
         | SyntaxKind.UnknownKeyword
         | SyntaxKind.VoidKeyword
+        | SyntaxKind.Int8Keyword
+        | SyntaxKind.Uint8Keyword
+        | SyntaxKind.Int16Keyword
+        | SyntaxKind.Uint16Keyword
+        | SyntaxKind.Int32Keyword
+        | SyntaxKind.Uint32Keyword
+        | SyntaxKind.Int64Keyword
+        | SyntaxKind.Uint64Keyword
+        | SyntaxKind.Float32Keyword
         ;
 
     /* @internal */
@@ -2195,9 +2266,98 @@ namespace ts {
         readonly kind: SyntaxKind.BigIntLiteral;
     }
 
+    export interface Int8Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Int8Literal;
+        /* @internal */
+        readonly numericLiteralFlags: TokenFlags;
+    }
+
+    export interface Int16Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Int16Literal;
+        /* @internal */
+        readonly numericLiteralFlags: TokenFlags;
+    }
+
+    export interface Int32Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Int32Literal;
+        /* @internal */
+        readonly numericLiteralFlags: TokenFlags;
+    }
+
+    export interface Int64Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Int64Literal;
+    }
+
+    export interface Uint8Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Uint8Literal;
+    }
+
+    export interface Uint16Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Uint16Literal;
+    }
+
+    export interface Uint32Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Uint32Literal;
+    }
+
+    export interface Uint64Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Uint64Literal;
+    }
+
+
+    export interface Float32Literal extends LiteralExpression {
+        readonly kind: SyntaxKind.Float32Literal;
+    }
+
+    export type SizedIntegerLiteral =
+        | Int8Literal
+        | Int16Literal
+        | Int32Literal
+        | Int64Literal
+        | Uint8Literal
+        | Uint16Literal
+        | Uint32Literal
+        | Uint64Literal
+        ;
+
+    export type SizedNumberLiteral = SizedIntegerLiteral | Float32Literal;
+
+    export const sizedNumberLiteralSuffixMap = {
+        [SyntaxKind.Int8Literal]: "i8",
+        [SyntaxKind.Int16Literal]: "i16",
+        [SyntaxKind.Int32Literal]: "i32",
+        [SyntaxKind.Int64Literal]: "i64",
+        [SyntaxKind.Uint8Literal]: "u8",
+        [SyntaxKind.Uint16Literal]: "u16",
+        [SyntaxKind.Uint32Literal]: "u32",
+        [SyntaxKind.Uint64Literal]: "u64",
+        [SyntaxKind.Float32Literal]: "f32",
+    };
+
+    export const reverseSizedNumberLiteralSuffixMap: {[k: string]: SizedNumberLiteralSyntaxKind} = {
+        i8: SyntaxKind.Int8Literal,
+        i16: SyntaxKind.Int16Literal,
+        i32: SyntaxKind.Int32Literal,
+        i64: SyntaxKind.Int64Literal,
+        u8: SyntaxKind.Uint8Literal,
+        u16: SyntaxKind.Uint16Literal,
+        u32: SyntaxKind.Uint32Literal,
+        u64: SyntaxKind.Uint64Literal,
+        f32: SyntaxKind.Float32Literal,
+    };
+
     export type LiteralToken =
         | NumericLiteral
         | BigIntLiteral
+        | Int8Literal
+        | Int16Literal
+        | Int32Literal
+        | Int64Literal
+        | Uint8Literal
+        | Uint16Literal
+        | Uint32Literal
+        | Uint64Literal
+        | Float32Literal
         | StringLiteral
         | JsxText
         | RegularExpressionLiteral
@@ -4731,6 +4891,9 @@ namespace ts {
         // The TypeReferenceNode resolves to a BigInt-like type.
         BigIntLikeType,
 
+        // The TypeReferenceNode resolves to a Integer-like type.
+        IntegerLikeType,
+
         // The TypeReferenceNode resolves to a String-like type.
         StringLikeType,
 
@@ -5148,23 +5311,28 @@ namespace ts {
         TemplateLiteral = 1 << 27,  // Template literal type
         StringMapping   = 1 << 28,  // Uppercase/Lowercase type
 
+        SizedNumber           = 1 << 29,  // integer type
+        SizedNumberLiteral    = 1 << 30,  // integer literal type
+
+
         /* @internal */
         AnyOrUnknown = Any | Unknown,
         /* @internal */
         Nullable = Undefined | Null,
-        Literal = StringLiteral | NumberLiteral | BigIntLiteral | BooleanLiteral,
+        Literal = StringLiteral | NumberLiteral | BigIntLiteral | SizedNumberLiteral | BooleanLiteral ,
         Unit = Literal | UniqueESSymbol | Nullable,
         StringOrNumberLiteral = StringLiteral | NumberLiteral,
         /* @internal */
         StringOrNumberLiteralOrUnique = StringLiteral | NumberLiteral | UniqueESSymbol,
         /* @internal */
-        DefinitelyFalsy = StringLiteral | NumberLiteral | BigIntLiteral | BooleanLiteral | Void | Undefined | Null,
-        PossiblyFalsy = DefinitelyFalsy | String | Number | BigInt | Boolean,
+        DefinitelyFalsy = StringLiteral | NumberLiteral | BigIntLiteral | SizedNumberLiteral | BooleanLiteral | Void | Undefined | Null,
+        PossiblyFalsy = DefinitelyFalsy | String | Number | BigInt | SizedNumber | Boolean,
         /* @internal */
-        Intrinsic = Any | Unknown | String | Number | BigInt | Boolean | BooleanLiteral | ESSymbol | Void | Undefined | Null | Never | NonPrimitive,
+        Intrinsic = Any | Unknown | String | Number | BigInt | SizedNumber | Boolean | BooleanLiteral | ESSymbol | Void | Undefined | Null | Never | NonPrimitive,
         /* @internal */
-        Primitive = String | Number | BigInt | Boolean | Enum | EnumLiteral | ESSymbol | Void | Undefined | Null | Literal | UniqueESSymbol,
+        Primitive = String | Number | BigInt | SizedNumber | Boolean | Enum | EnumLiteral | ESSymbol | Void | Undefined | Null | Literal | UniqueESSymbol,
         StringLike = String | StringLiteral | TemplateLiteral | StringMapping,
+        SizedNumberLike = SizedNumber | SizedNumberLiteral,
         NumberLike = Number | NumberLiteral | Enum,
         BigIntLike = BigInt | BigIntLiteral,
         BooleanLike = Boolean | BooleanLiteral,
@@ -5172,7 +5340,7 @@ namespace ts {
         ESSymbolLike = ESSymbol | UniqueESSymbol,
         VoidLike = Void | Undefined,
         /* @internal */
-        DisjointDomains = NonPrimitive | StringLike | NumberLike | BigIntLike | BooleanLike | ESSymbolLike | VoidLike | Null,
+        DisjointDomains = NonPrimitive | StringLike | NumberLike | BigIntLike | SizedNumberLike | BooleanLike | ESSymbolLike | VoidLike | Null,
         UnionOrIntersection = Union | Intersection,
         StructuredType = Object | Union | Intersection,
         TypeVariable = TypeParameter | IndexedAccess,
@@ -5185,10 +5353,10 @@ namespace ts {
         /* @internal */
         Simplifiable = IndexedAccess | Conditional,
         /* @internal */
-        Singleton = Any | Unknown | String | Number | Boolean | BigInt | ESSymbol | Void | Undefined | Null | Never | NonPrimitive,
+        Singleton = Any | Unknown | String | Number | Boolean | BigInt | SizedNumber | ESSymbol | Void | Undefined | Null | Never | NonPrimitive,
         // 'Narrowable' types are types where narrowing actually narrows.
         // This *should* be every type other than null, undefined, void, and never
-        Narrowable = Any | Unknown | StructuredOrInstantiable | StringLike | NumberLike | BigIntLike | BooleanLike | ESSymbol | UniqueESSymbol | NonPrimitive,
+        Narrowable = Any | Unknown | StructuredOrInstantiable | StringLike | NumberLike | BigIntLike | SizedNumberLike | BooleanLike | ESSymbol | UniqueESSymbol | NonPrimitive,
         // The following flags are aggregated during union and intersection type construction
         /* @internal */
         IncludesMask = Any | Unknown | Primitive | Never | Object | Union | Intersection | NonPrimitive | TemplateLiteral,
@@ -5256,6 +5424,7 @@ namespace ts {
     // String literal types (TypeFlags.StringLiteral)
     // Numeric literal types (TypeFlags.NumberLiteral)
     // BigInt literal types (TypeFlags.BigIntLiteral)
+    // SizedNumber literal types (TypeFlags.SizedNumberLiteral)
     export interface LiteralType extends Type {
         value: string | number | PseudoBigInt; // Value of literal
         freshType: LiteralType;                // Fresh version of type
@@ -5279,6 +5448,69 @@ namespace ts {
     export interface BigIntLiteralType extends LiteralType {
         value: PseudoBigInt;
     }
+
+    export interface SizedNumberLiteralType extends LiteralType {
+        suffix: "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64" | "f32";
+        value: number | PseudoBigInt;
+    }
+
+    export interface Float32LiteralType extends SizedNumberLiteralType {
+        value: number;
+        suffix: "f32";
+    }
+
+    export interface IntegerLiteralType extends SizedNumberLiteralType {
+        suffix: "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64";
+    }
+
+    export interface SignedIntLiteralType extends IntegerLiteralType {
+        suffix: "i8" | "i16" | "i32" | "i64";
+    }
+    export interface Int8LiteralType extends SignedIntLiteralType {
+        suffix: "i8";
+        value: number;
+    }
+
+    export interface Int16LiteralType extends SignedIntLiteralType {
+        suffix: "i16";
+        value: number;
+    }
+
+    export interface Int32LiteralType extends SignedIntLiteralType {
+        suffix: "i32";
+        value: number;
+    }
+
+    export interface Int64LiteralType extends SignedIntLiteralType {
+        suffix: "i64";
+        value: PseudoBigInt;
+    }
+
+    export interface UnsignedIntLiteralType extends IntegerLiteralType {
+        suffix: "u8" | "u16" | "u32" | "u64";
+    }
+
+    export interface Uint8LiteralType extends UnsignedIntLiteralType {
+        suffix: "u8";
+        value: number;
+    }
+
+    export interface Uint16LiteralType extends UnsignedIntLiteralType {
+        suffix: "u16";
+        value: number;
+    }
+
+    export interface Uint32LiteralType extends UnsignedIntLiteralType {
+        suffix: "u32";
+        value: number;
+    }
+
+    export interface Uint64LiteralType extends UnsignedIntLiteralType {
+        suffix: "u64";
+        value: PseudoBigInt;
+    }
+
+
 
     // Enum types (TypeFlags.Enum)
     export interface EnumType extends Type {
@@ -7041,7 +7273,9 @@ namespace ts {
         | NonNullExpression
         | PartiallyEmittedExpression;
 
-    export type TypeOfTag = "undefined" | "number" | "bigint" | "boolean" | "string" | "symbol" | "object" | "function";
+
+    export type IntTypeOfTag = "byte" | "short" | "int" | "long";
+    export type TypeOfTag = "undefined" | "number" | "bigint" | "boolean" | "string" | "symbol" | "object" | "function" | IntTypeOfTag;
 
     /* @internal */
     export interface CallBinding {
@@ -7098,6 +7332,7 @@ namespace ts {
 
         createNumericLiteral(value: string | number, numericLiteralFlags?: TokenFlags): NumericLiteral;
         createBigIntLiteral(value: string | PseudoBigInt): BigIntLiteral;
+        createSizedNumberLiteral<I extends SizedNumberLiteral>(type: SizedNumberLiteralSyntaxKind, value: number | string | PseudoBigInt): I;
         createStringLiteral(text: string, isSingleQuote?: boolean): StringLiteral;
         /* @internal*/ createStringLiteral(text: string, isSingleQuote?: boolean, hasExtendedUnicodeEscape?: boolean): StringLiteral; // eslint-disable-line @typescript-eslint/unified-signatures
         createStringLiteralFromNode(sourceNode: PropertyNameLiteral, isSingleQuote?: boolean): StringLiteral;
@@ -8682,5 +8917,10 @@ namespace ts {
     export interface PseudoBigInt {
         negative: boolean;
         base10Value: string;
+    }
+
+    export interface SizedNumber {
+        value: number | PseudoBigInt;
+        suffix: "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" | "f32";
     }
 }
